@@ -1,0 +1,234 @@
+import axios, { AxiosResponse } from 'axios';
+import { apiClient } from '@services/apiClient';
+{{#if hasTypes}}
+import { {{types}} } from '@utils/types';
+{{/if}}
+{{#if hasZod}}
+import { z } from 'zod';
+{{/if}}
+
+{{#if hasZod}}
+// Zod schemas for runtime validation
+export const {{entityName}}Schema = z.object({
+{{#each zodSchema}}
+  {{name}}: {{schema}},
+{{/each}}
+});
+
+export const Create{{entityName}}RequestSchema = z.object({
+{{#each createSchema}}
+  {{name}}: {{schema}},
+{{/each}}
+});
+
+export const Update{{entityName}}RequestSchema = z.object({
+{{#each updateSchema}}
+  {{name}}: {{schema}},
+{{/each}}
+});
+
+// Infer types from schemas
+export type {{entityName}} = z.infer<typeof {{entityName}}Schema>;
+export type Create{{entityName}}Request = z.infer<typeof Create{{entityName}}RequestSchema>;
+export type Update{{entityName}}Request = z.infer<typeof Update{{entityName}}RequestSchema>;
+{{else}}
+// TypeScript interfaces
+export interface {{entityName}} {
+{{#each properties}}
+  {{name}}{{#if optional}}?{{/if}}: {{type}};
+{{/each}}
+}
+
+export interface Create{{entityName}}Request {
+{{#each createProperties}}
+  {{name}}{{#if optional}}?{{/if}}: {{type}};
+{{/each}}
+}
+
+export interface Update{{entityName}}Request {
+{{#each updateProperties}}
+  {{name}}{{#if optional}}?{{/if}}: {{type}};
+{{/each}}
+}
+{{/if}}
+
+export interface {{entityName}}ListResponse {
+  data: {{entityName}}[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface {{entityName}}QueryParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+{{#each queryParams}}
+  {{name}}?: {{type}};
+{{/each}}
+}
+
+/**
+ * @service {{serviceName}}
+ * @description API service for managing {{entityName}} resources
+ * @category API Services
+ */
+export class {{serviceName}} {
+  private readonly baseUrl = '{{baseUrl}}';
+
+  /**
+   * Get all {{entityName}} items with optional filtering and pagination
+   * @param params Query parameters for filtering and pagination
+   * @returns Promise resolving to paginated {{entityName}} list
+   */
+  public async get{{entityName}}List(params: {{entityName}}QueryParams = {}): Promise<{{entityName}}ListResponse> {
+    try {
+      const response: AxiosResponse<{{entityName}}ListResponse> = await apiClient.get(
+        `${this.baseUrl}`,
+        { params }
+      );
+
+{{#if hasZod}}
+      // Validate response data
+      const validatedData = response.data.data.map(item => {{entityName}}Schema.parse(item));
+      return { ...response.data, data: validatedData };
+{{else}}
+      return response.data;
+{{/if}}
+    } catch (error) {
+      throw this.handleError(error, 'Failed to fetch {{entityName}} list');
+    }
+  }
+
+  /**
+   * Get a single {{entityName}} by ID
+   * @param id The {{entityName}} ID
+   * @returns Promise resolving to {{entityName}} data
+   */
+  public async get{{entityName}}(id: string): Promise<{{entityName}}> {
+    try {
+      const response: AxiosResponse<{{entityName}}> = await apiClient.get(
+        `${this.baseUrl}/${id}`
+      );
+
+{{#if hasZod}}
+      return {{entityName}}Schema.parse(response.data);
+{{else}}
+      return response.data;
+{{/if}}
+    } catch (error) {
+      throw this.handleError(error, `Failed to fetch {{entityName}} with ID: ${id}`);
+    }
+  }
+
+  /**
+   * Create a new {{entityName}}
+   * @param data {{entityName}} creation data
+   * @returns Promise resolving to created {{entityName}}
+   */
+  public async create{{entityName}}(data: Create{{entityName}}Request): Promise<{{entityName}}> {
+    try {
+{{#if hasZod}}
+      // Validate input data
+      const validatedData = Create{{entityName}}RequestSchema.parse(data);
+{{else}}
+      const validatedData = data;
+{{/if}}
+
+      const response: AxiosResponse<{{entityName}}> = await apiClient.post(
+        this.baseUrl,
+        validatedData
+      );
+
+{{#if hasZod}}
+      return {{entityName}}Schema.parse(response.data);
+{{else}}
+      return response.data;
+{{/if}}
+    } catch (error) {
+      throw this.handleError(error, 'Failed to create {{entityName}}');
+    }
+  }
+
+  /**
+   * Update an existing {{entityName}}
+   * @param id The {{entityName}} ID
+   * @param data {{entityName}} update data
+   * @returns Promise resolving to updated {{entityName}}
+   */
+  public async update{{entityName}}(id: string, data: Update{{entityName}}Request): Promise<{{entityName}}> {
+    try {
+{{#if hasZod}}
+      // Validate input data
+      const validatedData = Update{{entityName}}RequestSchema.parse(data);
+{{else}}
+      const validatedData = data;
+{{/if}}
+
+      const response: AxiosResponse<{{entityName}}> = await apiClient.put(
+        `${this.baseUrl}/${id}`,
+        validatedData
+      );
+
+{{#if hasZod}}
+      return {{entityName}}Schema.parse(response.data);
+{{else}}
+      return response.data;
+{{/if}}
+    } catch (error) {
+      throw this.handleError(error, `Failed to update {{entityName}} with ID: ${id}`);
+    }
+  }
+
+  /**
+   * Delete a {{entityName}}
+   * @param id The {{entityName}} ID
+   * @returns Promise resolving when deletion is complete
+   */
+  public async delete{{entityName}}(id: string): Promise<void> {
+    try {
+      await apiClient.delete(`${this.baseUrl}/${id}`);
+    } catch (error) {
+      throw this.handleError(error, `Failed to delete {{entityName}} with ID: ${id}`);
+    }
+  }
+
+{{#each customMethods}}
+  /**
+   * {{description}}
+   * @param {{parameters}}
+   * @returns {{returns}}
+   */
+  public async {{name}}({{parametersStr}}): Promise<{{returnType}}> {
+    try {
+      {{implementation}}
+    } catch (error) {
+      throw this.handleError(error, '{{errorMessage}}');
+    }
+  }
+
+{{/each}}
+  /**
+   * Handle API errors with consistent error formatting
+   * @param error The caught error
+   * @param message Custom error message
+   * @throws Formatted error with additional context
+   */
+  private handleError(error: any, message: string): never {
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      const data = error.response?.data;
+      
+      throw new Error(
+        `${message} (Status: ${status}, Details: ${JSON.stringify(data)})`
+      );
+    }
+    
+    throw new Error(`${message} (${error.message})`);
+  }
+}
+
+// Export singleton instance
+export const {{serviceName.toLowerCase()}} = new {{serviceName}}();

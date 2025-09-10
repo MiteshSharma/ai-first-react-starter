@@ -1,0 +1,182 @@
+import React{{#if hasState}}, { useState, useEffect }{{/if}} from 'react';
+import styled from 'styled-components';
+import { Layout, Typography, Button{{#if hasAntdComponents}}, {{antdComponents}}{{/if}} } from 'antd';
+{{#if hasRouter}}
+import { useNavigate{{#if hasParams}}, useParams{{/if}} } from 'react-router-dom';
+{{/if}}
+{{#if hasStore}}
+import { observer } from 'mobx-react-lite';
+import { useStore } from '@stores';
+{{/if}}
+{{#if hasComponents}}
+{{#each components}}
+import { {{this}} } from '@components/{{this}}';
+{{/each}}
+{{/if}}
+
+const { Content } = Layout;
+const { Title } = Typography;
+
+{{#if hasInterfaces}}
+{{#each interfaces}}
+interface {{name}} {
+{{#each properties}}
+  {{name}}{{#unless required}}?{{/unless}}: {{type}};
+{{/each}}
+}
+{{/each}}
+{{/if}}
+
+const {{pageName}}Wrapper = styled(Content)`
+  padding: 24px;
+  min-height: 100vh;
+  background: #f0f2f5;
+  
+  .page-header {
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    
+    .title {
+      margin: 0;
+    }
+    
+    .actions {
+      display: flex;
+      gap: 8px;
+    }
+  }
+  
+  .page-content {
+    background: white;
+    padding: 24px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  {{#if customStyles}}
+  {{customStyles}}
+  {{/if}}
+`;
+
+{{#if hasStore}}
+export const {{pageName}}: React.FC = observer(() => {
+{{else}}
+export const {{pageName}}: React.FC = () => {
+{{/if}}
+  {{#if hasRouter}}
+  const navigate = useNavigate();
+  {{#if hasParams}}
+  const { {{routeParams}} } = useParams<{ {{routeParamsType}} }>();
+  {{/if}}
+  {{/if}}
+
+  {{#if hasStore}}
+  const { {{storeNames}} } = useStore();
+  {{/if}}
+
+  {{#if hasState}}
+  // Component state
+  {{#each stateVars}}
+  const [{{name}}, set{{capitalize name}}] = useState<{{type}}>({{defaultValue}});
+  {{/each}}
+  {{/if}}
+
+  {{#if hasEffects}}
+  // Effects
+  useEffect(() => {
+    {{#if hasStore}}
+    // Load initial data
+    {{#each storeActions}}
+    {{this}}();
+    {{/each}}
+    {{/if}}
+    {{effectBody}}
+  }, [{{#if hasStore}}{{#each storeDependencies}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}{{/if}}]);
+  {{/if}}
+
+  {{#if hasHandlers}}
+  // Event handlers
+  {{#each handlers}}
+  const {{name}} = {{#if isAsync}}async {{/if}}({{parameters}}) => {
+    {{body}}
+  };
+  {{/each}}
+  {{/if}}
+
+  {{#if hasLoading}}
+  if ({{loadingCondition}}) {
+    return (
+      <{{pageName}}Wrapper data-testid="{{kebabName}}-loading">
+        <div style={{ textAlign: 'center', padding: '50px' }}>
+          <div>Loading {{entityName}}...</div>
+        </div>
+      </{{pageName}}Wrapper>
+    );
+  }
+  {{/if}}
+
+  {{#if hasError}}
+  if ({{errorCondition}}) {
+    return (
+      <{{pageName}}Wrapper data-testid="{{kebabName}}-error">
+        <div style={{ textAlign: 'center', padding: '50px', color: '#ff4d4f' }}>
+          <Title level={4}>Error</Title>
+          <p>{{{errorMessage}}}</p>
+          {{#if hasRetry}}
+          <Button type="primary" onClick={{{retryAction}}}>
+            Try Again
+          </Button>
+          {{/if}}
+        </div>
+      </{{pageName}}Wrapper>
+    );
+  }
+  {{/if}}
+
+  return (
+    <{{pageName}}Wrapper data-testid="{{kebabName}}">
+      <div className="page-header">
+        <Title level={2} className="title">{{pageTitle}}</Title>
+        {{#if hasActions}}
+        <div className="actions">
+          {{#each actions}}
+          <Button {{#if type}}type="{{type}}"{{/if}} {{#if icon}}icon={<{{icon}} />}{{/if}} onClick={{{onClick}}}>
+            {{text}}
+          </Button>
+          {{/each}}
+        </div>
+        {{/if}}
+      </div>
+
+      <div className="page-content">
+        {{#if hasContent}}
+        {{#each contentSections}}
+        <div className="{{className}}">
+          {{{content}}}
+        </div>
+        {{/each}}
+        {{else}}
+        <div>
+          <p>Welcome to the {{pageTitle}} page!</p>
+          {{#if hasStore}}
+          <p>This page is connected to the following stores: {{storeNames}}</p>
+          {{/if}}
+          {{#if hasComponents}}
+          <div style={{ marginTop: '24px' }}>
+            {{#each components}}
+            <{{this}} />
+            {{/each}}
+          </div>
+          {{/if}}
+        </div>
+        {{/if}}
+      </div>
+    </{{pageName}}Wrapper>
+  );
+{{#if hasStore}}
+});
+{{else}}
+};
+{{/if}}

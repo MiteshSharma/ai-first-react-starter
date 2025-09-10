@@ -1,0 +1,341 @@
+import MockAdapter from 'axios-mock-adapter';
+import { faker } from 'faker';
+
+{{#if hasZod}}
+import { 
+  {{entityName}}Schema,
+  Create{{entityName}}RequestSchema,
+  Update{{entityName}}RequestSchema 
+} from './{{serviceName}}';
+{{/if}}
+
+// Mock data type
+export interface Mock{{entityName}} {
+{{#each properties}}
+  {{name}}: {{type}};
+{{/each}}
+}
+
+// Generate a single mock {{entityName}}
+export const generateMock{{entityName}} = (overrides: Partial<Mock{{entityName}}> = {}): Mock{{entityName}} => {
+  return {
+{{#each properties}}
+    {{name}}: {{#if faker}}{{faker}}{{else}}{{defaultValue}}{{/if}},
+{{/each}}
+    ...overrides,
+  };
+};
+
+// Generate multiple mock {{entityName}}s
+export const generateMock{{entityName}}s = (count: number = 10): Mock{{entityName}}[] => {
+  return Array.from({ length: count }, () => generateMock{{entityName}}());
+};
+
+// In-memory storage for mocks
+let mock{{entityName}}Store: Mock{{entityName}}[] = generateMock{{entityName}}s({{mockCount}});
+
+// Helper functions for CRUD operations
+export const find{{entityName}}ById = (id: string): Mock{{entityName}} | undefined => {
+  return mock{{entityName}}Store.find(item => item.id === id);
+};
+
+export const update{{entityName}}InStore = (id: string, updates: Partial<Mock{{entityName}}>): Mock{{entityName}} | null => {
+  const item = find{{entityName}}ById(id);
+  if (!item) return null;
+  
+  Object.assign(item, updates, { updatedAt: new Date().toISOString() });
+  return item;
+};
+
+export const delete{{entityName}}FromStore = (id: string): boolean => {
+  const index = mock{{entityName}}Store.findIndex(item => item.id === id);
+  if (index > -1) {
+    mock{{entityName}}Store.splice(index, 1);
+    return true;
+  }
+  return false;
+};
+
+export const add{{entityName}}ToStore = (item: Omit<Mock{{entityName}}, 'id' | 'createdAt' | 'updatedAt'>): Mock{{entityName}} => {
+  const new{{entityName}} = generateMock{{entityName}}(item);
+  mock{{entityName}}Store.unshift(new{{entityName}});
+  return new{{entityName}};
+};
+
+// Mock handlers setup
+export const setup{{entityName}}Mocks = (mock: MockAdapter) => {
+  // GET {{baseUrl}} - List {{entityName}}s with pagination
+  mock.onGet(new RegExp(`{{baseUrl}}(\\?.*)?`)).reply((config) => {
+    const url = new URL('http://localhost' + config.url);
+    const page = parseInt(url.searchParams.get('page') || '1', 10);
+    const limit = parseInt(url.searchParams.get('limit') || '10', 10);
+    const search = url.searchParams.get('search') || '';
+    {{#if hasStatusFilter}}
+    const status = url.searchParams.get('status') || 'all';
+    {{/if}}
+
+    let filtered{{entityName}}s = [...mock{{entityName}}Store];
+
+    // Apply search filter
+    if (search) {
+      const searchLower = search.toLowerCase();
+      filtered{{entityName}}s = filtered{{entityName}}s.filter(item =>
+        {{#each searchableFields}}
+        item.{{this}}.toString().toLowerCase().includes(searchLower){{#unless @last}} ||{{/unless}}
+        {{/each}}
+      );
+    }
+
+    {{#if hasStatusFilter}}
+    // Apply status filter
+    if (status !== 'all') {
+      const isActive = status === 'active';
+      filtered{{entityName}}s = filtered{{entityName}}s.filter(item => item.isActive === isActive);
+    }
+    {{/if}}
+
+    // Calculate pagination
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginated{{entityName}}s = filtered{{entityName}}s.slice(startIndex, endIndex);
+
+    const response = {
+      data: paginated{{entityName}}s,
+      pagination: {
+        page,
+        limit,
+        total: filtered{{entityName}}s.length,
+        totalPages: Math.ceil(filtered{{entityName}}s.length / limit),
+        hasNext: endIndex < filtered{{entityName}}s.length,
+        hasPrev: page > 1,
+      },
+      meta: {
+        filters: { search{{#if hasStatusFilter}}, status{{/if}} },
+        timestamp: new Date().toISOString(),
+      },
+    };
+
+    return [200, response];
+  });
+
+  // GET {{baseUrl}}/:id - Get single {{entityName}}
+  mock.onGet(new RegExp(`{{baseUrl}}/(.+)`)).reply((config) => {
+    const id = config.url?.split('/').pop();
+    if (!id) {
+      return [400, { message: '{{entityName}} ID is required' }];
+    }
+
+    const item = find{{entityName}}ById(id);
+    if (!item) {
+      return [404, { 
+        message: '{{entityName}} not found',
+        code: '{{constantCase entityName}}_NOT_FOUND',
+        id 
+      }];
+    }
+
+    return [200, { data: item }];
+  });
+
+  // POST {{baseUrl}} - Create new {{entityName}}
+  mock.onPost('{{baseUrl}}').reply((config) => {
+    try {
+      const itemData = JSON.parse(config.data);
+      
+      {{#if hasZod}}
+      // Validate with Zod schema
+      const validatedData = Create{{entityName}}RequestSchema.parse(itemData);
+      {{else}}
+      // Basic validation
+      {{#each requiredFields}}
+      if (!itemData.{{this}}) {
+        return [400, { 
+          message: '{{this}} is required',
+          code: 'VALIDATION_ERROR'
+        }];
+      }
+      {{/each}}
+      const validatedData = itemData;
+      {{/if}}
+
+      {{#if hasUniqueFields}}
+      // Check for unique field conflicts
+      {{#each uniqueFields}}
+      const existing{{capitalize this}} = mock{{../entityName}}Store.find(item => 
+        item.{{this}} === validatedData.{{this}}
+      );
+      
+      if (existing{{capitalize this}}) {
+        return [409, { 
+          message: '{{capitalize this}} already exists',
+          code: '{{constantCase this}}_CONFLICT',
+          {{this}}: validatedData.{{this}}
+        }];
+      }
+      {{/each}}
+      {{/if}}
+
+      // Create new {{entityName}}
+      const new{{entityName}} = add{{entityName}}ToStore(validatedData);
+
+      return [201, { 
+        data: new{{entityName}},
+        message: '{{entityName}} created successfully' 
+      }];
+    } catch (error) {
+      {{#if hasZod}}
+      if (error.name === 'ZodError') {
+        return [400, { 
+          message: 'Validation error',
+          code: 'VALIDATION_ERROR',
+          errors: error.errors
+        }];
+      }
+      {{/if}}
+      return [400, { 
+        message: 'Invalid JSON data',
+        code: 'INVALID_JSON' 
+      }];
+    }
+  });
+
+  // PUT {{baseUrl}}/:id - Update {{entityName}}
+  mock.onPut(new RegExp(`{{baseUrl}}/(.+)`)).reply((config) => {
+    const id = config.url?.split('/').pop();
+    if (!id) {
+      return [400, { message: '{{entityName}} ID is required' }];
+    }
+
+    try {
+      const updates = JSON.parse(config.data);
+      
+      {{#if hasZod}}
+      // Validate with Zod schema
+      const validatedUpdates = Update{{entityName}}RequestSchema.parse(updates);
+      {{else}}
+      const validatedUpdates = updates;
+      {{/if}}
+      
+      // Check if {{entityName}} exists
+      const existing{{entityName}} = find{{entityName}}ById(id);
+      if (!existing{{entityName}}) {
+        return [404, { 
+          message: '{{entityName}} not found',
+          code: '{{constantCase entityName}}_NOT_FOUND',
+          id 
+        }];
+      }
+
+      {{#if hasUniqueFields}}
+      // Check for unique field conflicts (if applicable fields are being updated)
+      {{#each uniqueFields}}
+      if (validatedUpdates.{{this}} && validatedUpdates.{{this}} !== existing{{../entityName}}.{{this}}) {
+        const conflict = mock{{../entityName}}Store.find(item => 
+          item.id !== id && 
+          item.{{this}} === validatedUpdates.{{this}}
+        );
+        
+        if (conflict) {
+          return [409, { 
+            message: '{{capitalize this}} already exists',
+            code: '{{constantCase this}}_CONFLICT',
+            {{this}}: validatedUpdates.{{this}}
+          }];
+        }
+      }
+      {{/each}}
+      {{/if}}
+
+      // Update {{entityName}}
+      const updated{{entityName}} = update{{entityName}}InStore(id, validatedUpdates);
+      
+      return [200, { 
+        data: updated{{entityName}},
+        message: '{{entityName}} updated successfully' 
+      }];
+    } catch (error) {
+      {{#if hasZod}}
+      if (error.name === 'ZodError') {
+        return [400, { 
+          message: 'Validation error',
+          code: 'VALIDATION_ERROR',
+          errors: error.errors
+        }];
+      }
+      {{/if}}
+      return [400, { 
+        message: 'Invalid JSON data',
+        code: 'INVALID_JSON' 
+      }];
+    }
+  });
+
+  // DELETE {{baseUrl}}/:id - Delete {{entityName}}
+  mock.onDelete(new RegExp(`{{baseUrl}}/(.+)`)).reply((config) => {
+    const id = config.url?.split('/').pop();
+    if (!id) {
+      return [400, { message: '{{entityName}} ID is required' }];
+    }
+
+    // Check if {{entityName}} exists
+    const item = find{{entityName}}ById(id);
+    if (!item) {
+      return [404, { 
+        message: '{{entityName}} not found',
+        code: '{{constantCase entityName}}_NOT_FOUND',
+        id 
+      }];
+    }
+
+    {{#if hasDeleteConstraints}}
+    // Business rule validations (example)
+    {{#each deleteConstraints}}
+    if (item.{{field}} === '{{value}}') {
+      return [403, { 
+        message: '{{message}}',
+        code: '{{code}}',
+        id 
+      }];
+    }
+    {{/each}}
+    {{/if}}
+
+    // Delete {{entityName}}
+    const deleted = delete{{entityName}}FromStore(id);
+    
+    if (deleted) {
+      return [200, { 
+        message: '{{entityName}} deleted successfully',
+        deletedId: id 
+      }];
+    } else {
+      return [500, { 
+        message: 'Failed to delete {{entityName}}',
+        code: 'DELETE_FAILED' 
+      }];
+    }
+  });
+
+  {{#if hasCustomMethods}}
+  {{#each customMethods}}
+  // {{method}} {{../baseUrl}}{{endpoint}} - {{description}}
+  mock.on{{capitalize method}}('{{../baseUrl}}{{endpoint}}').reply((config) => {
+    // Custom endpoint implementation
+    {{#if hasParams}}
+    const params = {{#if isPath}}config.url?.split('/').pop(){{else}}JSON.parse(config.data){{/if}};
+    {{/if}}
+    
+    // Implementation for {{name}}
+    return [200, { 
+      message: '{{name}} executed successfully',
+      data: { /* custom response data */ }
+    }];
+  });
+  {{/each}}
+  {{/if}}
+
+  console.log('{{entityIcon}} {{entityName}} API mocks registered');
+};
+
+// Export for testing
+export { mock{{entityName}}Store };

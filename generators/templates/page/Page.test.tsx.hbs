@@ -1,0 +1,194 @@
+import React from 'react';
+import { render, screen{{#if hasInteraction}}, fireEvent{{/if}}{{#if hasAsync}}, waitFor{{/if}} } from '@testing-library/react';
+import { BrowserRouter } from 'react-router-dom';
+{{#if hasStore}}
+import { StoreProvider } from '@stores';
+{{/if}}
+import { {{pageName}} } from './{{pageName}}';
+
+{{#if hasStore}}
+// Mock store
+const mockStore = {
+  {{#each mockStoreData}}
+  {{storeName}}: {
+    {{#each properties}}
+    {{name}}: {{value}},
+    {{/each}}
+    {{#each actions}}
+    {{name}}: jest.fn(),
+    {{/each}}
+  },
+  {{/each}}
+};
+{{/if}}
+
+{{#if hasMocks}}
+// Mock services
+{{#each mocks}}
+jest.mock('{{path}}', () => ({
+  {{#each exports}}
+  {{name}}: jest.fn(),
+  {{/each}}
+}));
+{{/each}}
+{{/if}}
+
+describe('{{pageName}}', () => {
+  const renderPage = ({{#if hasProps}}props = {}{{/if}}) => {
+    return render(
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        {{#if hasStore}}
+        <StoreProvider value={mockStore}>
+          <{{pageName}} {{#if hasProps}}{...props}{{/if}} />
+        </StoreProvider>
+        {{else}}
+        <{{pageName}} {{#if hasProps}}{...props}{{/if}} />
+        {{/if}}
+      </BrowserRouter>
+    );
+  };
+
+  beforeEach(() => {
+    {{#if hasStore}}
+    // Reset store mocks
+    {{#each mockStoreData}}
+    {{#each properties}}
+    mockStore.{{../storeName}}.{{name}} = {{value}};
+    {{/each}}
+    {{#each actions}}
+    mockStore.{{../storeName}}.{{name}}.mockClear();
+    {{/each}}
+    {{/each}}
+    {{/if}}
+    {{#if hasMocks}}
+    // Reset service mocks
+    jest.clearAllMocks();
+    {{/if}}
+  });
+
+  it('should render page correctly', () => {
+    renderPage();
+    
+    expect(screen.getByTestId('{{kebabName}}')).toBeInTheDocument();
+    expect(screen.getByText('{{pageTitle}}')).toBeInTheDocument();
+  });
+
+  {{#if hasStore}}
+  it('should load data on mount', {{#if hasAsync}}async {{/if}}() => {
+    renderPage();
+    
+    {{#if hasAsync}}
+    await waitFor(() => {
+      {{#each storeActions}}
+      expect(mockStore.{{../storeName}}.{{this}}).toHaveBeenCalled();
+      {{/each}}
+    });
+    {{else}}
+    {{#each storeActions}}
+    expect(mockStore.{{../storeName}}.{{this}}).toHaveBeenCalled();
+    {{/each}}
+    {{/if}}
+  });
+  {{/if}}
+
+  {{#if hasLoading}}
+  it('should show loading state', () => {
+    {{#if hasStore}}
+    mockStore.{{storeName}}.loading = true;
+    {{/if}}
+    
+    renderPage();
+    
+    expect(screen.getByTestId('{{kebabName}}-loading')).toBeInTheDocument();
+    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+  });
+  {{/if}}
+
+  {{#if hasError}}
+  it('should show error state', () => {
+    {{#if hasStore}}
+    mockStore.{{storeName}}.error = 'Test error message';
+    {{/if}}
+    
+    renderPage();
+    
+    expect(screen.getByTestId('{{kebabName}}-error')).toBeInTheDocument();
+    expect(screen.getByText('Test error message')).toBeInTheDocument();
+  });
+  {{/if}}
+
+  {{#if hasActions}}
+  {{#each actions}}
+  it('should handle {{text}} action', {{#if isAsync}}async {{/if}}() => {
+    renderPage();
+    
+    const button = screen.getByRole('button', { name: /{{text}}/i });
+    {{#if isAsync}}
+    fireEvent.click(button);
+    
+    await waitFor(() => {
+      expect({{onClick}}).toHaveBeenCalled();
+    });
+    {{else}}
+    fireEvent.click(button);
+    
+    expect({{onClick}}).toHaveBeenCalled();
+    {{/if}}
+  });
+  {{/each}}
+  {{/if}}
+
+  {{#if hasInteraction}}
+  it('should handle user interactions', {{#if hasAsync}}async {{/if}}() => {
+    renderPage();
+    
+    {{#each interactions}}
+    const {{elementVar}} = screen.getByTestId('{{elementId}}');
+    fireEvent.{{event}}({{elementVar}}{{#if eventData}}, {{eventData}}{{/if}});
+    
+    {{#if isAsync}}
+    await waitFor(() => {
+      {{expectation}}
+    });
+    {{else}}
+    {{expectation}}
+    {{/if}}
+    {{/each}}
+  });
+  {{/if}}
+
+  {{#if hasRouter}}
+  it('should handle navigation', () => {
+    const mockNavigate = jest.fn();
+    jest.mock('react-router-dom', () => ({
+      ...jest.requireActual('react-router-dom'),
+      useNavigate: () => mockNavigate,
+    }));
+    
+    renderPage();
+    
+    // Test navigation logic
+    {{navigationTest}}
+  });
+  {{/if}}
+
+  it('should match snapshot', () => {
+    const { container } = renderPage();
+    expect(container.firstChild).toMatchSnapshot();
+  });
+
+  {{#if hasAccessibility}}
+  it('should be accessible', async () => {
+    renderPage();
+    
+    // Check for proper ARIA labels
+    expect(screen.getByRole('main')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2 })).toBeInTheDocument();
+    
+    // Check keyboard navigation
+    const firstFocusableElement = screen.getByRole('button');
+    firstFocusableElement.focus();
+    expect(firstFocusableElement).toHaveFocus();
+  });
+  {{/if}}
+});

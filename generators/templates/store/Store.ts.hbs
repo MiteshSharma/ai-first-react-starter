@@ -1,0 +1,185 @@
+import { makeObservable, observable, action, computed, runInAction } from 'mobx';
+{{#if hasApi}}
+import { {{apiService}} } from '@services/{{apiService}}';
+{{/if}}
+{{#if hasTypes}}
+import { {{types}} } from '@utils/types';
+{{/if}}
+
+/**
+ * @class {{storeName}}
+ * @description {{description}}
+ * @category Stores
+ */
+export class {{storeName}} {
+  // Observable state
+{{#each properties}}
+  @observable public {{name}}: {{type}} = {{defaultValue}};
+{{/each}}
+  @observable public loading = false;
+  @observable public error: string | null = null;
+
+  constructor() {
+    makeObservable(this);
+  }
+
+  // Computed values
+{{#each computed}}
+  @computed
+  public get {{name}}(): {{type}} {
+    {{implementation}}
+  }
+
+{{/each}}
+  @computed
+  public get hasData(): boolean {
+    return {{hasDataCheck}};
+  }
+
+  @computed
+  public get hasError(): boolean {
+    return this.error !== null;
+  }
+
+  // Actions
+{{#each actions}}
+  @action.bound
+  public {{name}}({{parameters}}): {{returnType}} {
+    {{implementation}}
+  }
+
+{{/each}}
+{{#if hasApi}}
+  @action.bound
+  public async fetch{{entityName}}(): Promise<void> {
+    this.loading = true;
+    this.error = null;
+
+    try {
+      const data = await {{apiService}}.get{{entityName}}();
+      runInAction(() => {
+        this.{{dataProperty}} = data;
+        this.loading = false;
+      });
+    } catch (error) {
+      runInAction(() => {
+        this.error = error instanceof Error ? error.message : 'An error occurred';
+        this.loading = false;
+      });
+    }
+  }
+
+  @action.bound
+  public async create{{entityName}}(data: Create{{entityName}}Request): Promise<void> {
+    this.loading = true;
+    this.error = null;
+
+    try {
+      const newItem = await {{apiService}}.create{{entityName}}(data);
+      runInAction(() => {
+        if (Array.isArray(this.{{dataProperty}})) {
+          this.{{dataProperty}}.push(newItem);
+        } else {
+          this.{{dataProperty}} = newItem;
+        }
+        this.loading = false;
+      });
+    } catch (error) {
+      runInAction(() => {
+        this.error = error instanceof Error ? error.message : 'An error occurred';
+        this.loading = false;
+      });
+    }
+  }
+
+  @action.bound
+  public async update{{entityName}}(id: string, data: Update{{entityName}}Request): Promise<void> {
+    this.loading = true;
+    this.error = null;
+
+    try {
+      const updatedItem = await {{apiService}}.update{{entityName}}(id, data);
+      runInAction(() => {
+        if (Array.isArray(this.{{dataProperty}})) {
+          const index = this.{{dataProperty}}.findIndex(item => item.id === id);
+          if (index !== -1) {
+            this.{{dataProperty}}[index] = updatedItem;
+          }
+        } else {
+          this.{{dataProperty}} = updatedItem;
+        }
+        this.loading = false;
+      });
+    } catch (error) {
+      runInAction(() => {
+        this.error = error instanceof Error ? error.message : 'An error occurred';
+        this.loading = false;
+      });
+    }
+  }
+
+  @action.bound
+  public async delete{{entityName}}(id: string): Promise<void> {
+    this.loading = true;
+    this.error = null;
+
+    try {
+      await {{apiService}}.delete{{entityName}}(id);
+      runInAction(() => {
+        if (Array.isArray(this.{{dataProperty}})) {
+          this.{{dataProperty}} = this.{{dataProperty}}.filter(item => item.id !== id);
+        }
+        this.loading = false;
+      });
+    } catch (error) {
+      runInAction(() => {
+        this.error = error instanceof Error ? error.message : 'An error occurred';
+        this.loading = false;
+      });
+    }
+  }
+{{/if}}
+
+  @action.bound
+  public reset(): void {
+{{#each properties}}
+    this.{{name}} = {{defaultValue}};
+{{/each}}
+    this.loading = false;
+    this.error = null;
+  }
+
+  @action.bound
+  public clearError(): void {
+    this.error = null;
+  }
+}
+
+// Export interface for type safety
+export interface I{{storeName}} {
+{{#each properties}}
+  {{name}}: {{type}};
+{{/each}}
+  loading: boolean;
+  error: string | null;
+  
+  // Computed
+{{#each computed}}
+  readonly {{name}}: {{type}};
+{{/each}}
+  readonly hasData: boolean;
+  readonly hasError: boolean;
+  
+  // Actions
+{{#each actions}}
+  {{name}}({{parameters}}): {{returnType}};
+{{/each}}
+{{#if hasApi}}
+  fetch{{entityName}}(): Promise<void>;
+  create{{entityName}}(data: Create{{entityName}}Request): Promise<void>;
+  update{{entityName}}(id: string, data: Update{{entityName}}Request): Promise<void>;
+  delete{{entityName}}(id: string): Promise<void>;
+{{/if}}
+  reset(): void;
+  clearError(): void;
+}

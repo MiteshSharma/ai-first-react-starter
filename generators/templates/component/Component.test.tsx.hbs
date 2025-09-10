@@ -1,0 +1,44 @@
+import React from 'react';
+import { render, screen{{#if hasInteraction}}, fireEvent{{/if}} } from '@testing-library/react';
+import { {{componentName}} } from '../{{componentName}}';
+
+describe('{{componentName}}', () => {
+  const defaultProps = {
+{{#each props}}
+    {{name}}: {{testValue}},
+{{/each}}
+  };
+
+  it('should render correctly', () => {
+    render(<{{componentName}} {...defaultProps} />);
+    expect(screen.getByTestId('{{kebabName}}')).toBeInTheDocument();
+  });
+
+{{#each props}}
+  it('should display {{name}} correctly', () => {
+    render(<{{componentName}} {...defaultProps} />);
+    {{#if isText}}
+    expect(screen.getByText(defaultProps.{{name}})).toBeInTheDocument();
+    {{else}}
+    expect(screen.getByTestId('{{kebabName}}')).toBeInTheDocument();
+    {{/if}}
+  });
+
+{{/each}}
+{{#if hasInteraction}}
+  it('should handle user interactions', () => {
+    const mockHandler = jest.fn();
+    render(<{{componentName}} {...defaultProps} {{callbackProp}}={mockHandler} />);
+    
+    const element = screen.getByTestId('{{kebabName}}');
+    fireEvent.click(element);
+    
+    expect(mockHandler).toHaveBeenCalledTimes(1);
+  });
+{{/if}}
+
+  it('should match snapshot', () => {
+    const { container } = render(<{{componentName}} {...defaultProps} />);
+    expect(container.firstChild).toMatchSnapshot();
+  });
+});

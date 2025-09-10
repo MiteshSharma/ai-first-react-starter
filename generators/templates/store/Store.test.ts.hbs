@@ -1,0 +1,154 @@
+import { {{storeName}} } from '../{{storeName}}';
+{{#if hasApi}}
+import { {{apiService}} } from '@services/{{apiService}}';
+
+jest.mock('@services/{{apiService}}');
+const mock{{apiService}} = {{apiService}} as jest.Mocked<typeof {{apiService}}>;
+{{/if}}
+
+describe('{{storeName}}', () => {
+  let store: {{storeName}};
+
+  beforeEach(() => {
+    store = new {{storeName}}();
+    jest.clearAllMocks();
+  });
+
+  describe('initialization', () => {
+    it('should initialize with correct default values', () => {
+{{#each properties}}
+      expect(store.{{name}}).toEqual({{defaultValue}});
+{{/each}}
+      expect(store.loading).toBe(false);
+      expect(store.error).toBe(null);
+    });
+
+    it('should have correct computed values', () => {
+{{#each computed}}
+      // Test {{name}} computed value
+      expect(typeof store.{{name}}).toBe('{{computedType}}');
+{{/each}}
+      expect(store.hasData).toBe({{hasDataDefault}});
+      expect(store.hasError).toBe(false);
+    });
+  });
+
+  describe('actions', () => {
+{{#each actions}}
+    describe('{{name}}', () => {
+      it('should {{description}}', () => {
+        {{testImplementation}}
+      });
+    });
+
+{{/each}}
+    describe('reset', () => {
+      it('should reset all properties to default values', () => {
+        // Modify some properties
+{{#each properties}}
+        store.{{name}} = {{testValue}};
+{{/each}}
+        store.loading = true;
+        store.error = 'Test error';
+
+        // Reset
+        store.reset();
+
+        // Verify reset
+{{#each properties}}
+        expect(store.{{name}}).toEqual({{defaultValue}});
+{{/each}}
+        expect(store.loading).toBe(false);
+        expect(store.error).toBe(null);
+      });
+    });
+
+    describe('clearError', () => {
+      it('should clear error state', () => {
+        store.error = 'Test error';
+        store.clearError();
+        expect(store.error).toBe(null);
+      });
+    });
+  });
+
+{{#if hasApi}}
+  describe('API actions', () => {
+    describe('fetch{{entityName}}', () => {
+      it('should fetch data successfully', async () => {
+        const mockData = {{mockApiData}};
+        mock{{apiService}}.get{{entityName}}.mockResolvedValue(mockData);
+
+        await store.fetch{{entityName}}();
+
+        expect(store.{{dataProperty}}).toEqual(mockData);
+        expect(store.loading).toBe(false);
+        expect(store.error).toBe(null);
+        expect(mock{{apiService}}.get{{entityName}}).toHaveBeenCalledTimes(1);
+      });
+
+      it('should handle fetch error', async () => {
+        const error = new Error('Fetch failed');
+        mock{{apiService}}.get{{entityName}}.mockRejectedValue(error);
+
+        await store.fetch{{entityName}}();
+
+        expect(store.loading).toBe(false);
+        expect(store.error).toBe('Fetch failed');
+      });
+    });
+
+    describe('create{{entityName}}', () => {
+      it('should create new item successfully', async () => {
+        const newData = {{mockCreateData}};
+        const createdItem = {{mockCreatedItem}};
+        mock{{apiService}}.create{{entityName}}.mockResolvedValue(createdItem);
+
+        await store.create{{entityName}}(newData);
+
+        expect(store.loading).toBe(false);
+        expect(store.error).toBe(null);
+        expect(mock{{apiService}}.create{{entityName}}).toHaveBeenCalledWith(newData);
+      });
+
+      it('should handle create error', async () => {
+        const error = new Error('Create failed');
+        mock{{apiService}}.create{{entityName}}.mockRejectedValue(error);
+
+        await store.create{{entityName}}({{mockCreateData}});
+
+        expect(store.loading).toBe(false);
+        expect(store.error).toBe('Create failed');
+      });
+    });
+
+    describe('update{{entityName}}', () => {
+      it('should update item successfully', async () => {
+        const id = '1';
+        const updateData = {{mockUpdateData}};
+        const updatedItem = {{mockUpdatedItem}};
+        mock{{apiService}}.update{{entityName}}.mockResolvedValue(updatedItem);
+
+        await store.update{{entityName}}(id, updateData);
+
+        expect(store.loading).toBe(false);
+        expect(store.error).toBe(null);
+        expect(mock{{apiService}}.update{{entityName}}).toHaveBeenCalledWith(id, updateData);
+      });
+    });
+
+    describe('delete{{entityName}}', () => {
+      it('should delete item successfully', async () => {
+        const id = '1';
+        mock{{apiService}}.delete{{entityName}}.mockResolvedValue(undefined);
+
+        await store.delete{{entityName}}(id);
+
+        expect(store.loading).toBe(false);
+        expect(store.error).toBe(null);
+        expect(mock{{apiService}}.delete{{entityName}}).toHaveBeenCalledWith(id);
+      });
+    });
+  });
+{{/if}}
+});

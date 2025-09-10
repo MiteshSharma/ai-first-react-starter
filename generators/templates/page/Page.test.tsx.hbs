@@ -36,7 +36,7 @@ jest.mock('{{path}}', () => ({
 describe('{{pageName}}', () => {
   const renderPage = ({{#if hasProps}}props = {}{{/if}}) => {
     return render(
-      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <BrowserRouter future={{futureProps}}>
         {{#if hasStore}}
         <StoreProvider value={mockStore}>
           <{{pageName}} {{#if hasProps}}{...props}{{/if}} />

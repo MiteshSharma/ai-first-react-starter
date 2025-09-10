@@ -37,7 +37,35 @@ A comprehensive React framework designed for AI-assisted development with produc
 - Node.js v22.0.0 or higher
 - npm v10.0.0 or higher
 
-### Create a New Project
+## 📦 Installation
+
+### Option 1: Global Installation from Local Source (Recommended for Development)
+
+```bash
+# Clone or download this repository
+git clone https://github.com/MiteshSharma/ai-first-react-framework.git
+cd ai-first-react-framework
+
+# Install globally from local source
+npm install -g .
+```
+
+### Option 2: Using npm link (Best for Active Development)
+
+```bash
+# In the ai-first-react-framework directory
+npm link
+
+# This creates a global symlink - any changes to the code are immediately available
+```
+
+### Option 3: From NPM (When Published)
+
+```bash
+npm install -g ai-first-react-framework
+```
+
+After installation, you can use the CLI commands directly:
 
 ```bash
 npx ai-first-react-framework create-app my-app

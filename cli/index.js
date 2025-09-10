@@ -57,21 +57,89 @@ class AIFirstCLI {
       throw new Error(`Directory ${appName} already exists`);
     }
 
-    // Create app directory
-    fs.mkdirSync(appDir, { recursive: true });
+    // Create React app first using official CRA
+    console.log('📦 Creating React app with TypeScript...');
+    execSync(`npx create-react-app ${appName} --template typescript`, { 
+      stdio: 'inherit',
+      cwd: process.cwd()
+    });
+
+    // Navigate to the created app
     process.chdir(appDir);
 
-    // Copy template files
+    // Install additional dependencies from our template
+    console.log('📦 Installing AI-First dependencies...');
+    const additionalDeps = [
+      'antd@^5.21.0',
+      'axios@^1.11.0', 
+      'mobx@^6.13.0',
+      'mobx-react-lite@^4.0.7',
+      'react-router-dom@^6.28.0',
+      'styled-components@^6.1.13',
+      'swr@^2.3.0',
+      'web-vitals@^4.2.3',
+      'zod@^3.23.8'
+    ];
+
+    const devDeps = [
+      '@craco/craco@^7.1.0',
+      '@types/styled-components@^5.1.34',
+      '@typescript-eslint/eslint-plugin@^8.15.0', 
+      '@typescript-eslint/parser@^8.15.0',
+      'axios-mock-adapter@^2.0.0',
+      'eslint-config-airbnb@^19.0.4',
+      'eslint-config-airbnb-typescript@^18.0.0',
+      'eslint-config-prettier@^9.1.0',
+      'eslint-import-resolver-typescript@^3.10.1',
+      'eslint-plugin-import@^2.31.0',
+      'eslint-plugin-jsx-a11y@^6.10.2',
+      'eslint-plugin-react@^7.37.2',
+      'eslint-plugin-react-hooks@^5.0.0',
+      'eslint-plugin-sonarjs@^2.0.4',
+      '@faker-js/faker@^9.2.0',
+      'prettier@^3.3.3'
+    ];
+
+    execSync(`npm install --legacy-peer-deps ${additionalDeps.join(' ')}`, { stdio: 'inherit' });
+    execSync(`npm install --save-dev --legacy-peer-deps ${devDeps.join(' ')}`, { stdio: 'inherit' });
+
+    // Copy our custom files over the CRA defaults
     const templateDir = path.join(__dirname, '..', 'template');
-    this.copyDirectory(templateDir, appDir);
+    console.log('⚙️  Applying AI-First customizations...');
+    
+    // Copy source files
+    this.copyDirectorySelective(path.join(templateDir, 'src'), path.join(appDir, 'src'));
+    
+    // Copy configuration files
+    const configFiles = [
+      '.env.development',
+      '.env.example', 
+      '.env.production',
+      '.env.staging',
+      '.eslintrc.json',
+      '.prettierignore',
+      '.prettierrc',
+      'craco.config.js',
+      'Dockerfile',
+      'nginx.conf'
+    ];
+    
+    for (const file of configFiles) {
+      if (fs.existsSync(path.join(templateDir, file))) {
+        fs.copyFileSync(
+          path.join(templateDir, file),
+          path.join(appDir, file)
+        );
+      }
+    }
 
-    // Install dependencies
-    console.log('📦 Installing dependencies...');
-    execSync('npm install', { stdio: 'inherit' });
+    // Copy GitHub workflows
+    if (fs.existsSync(path.join(templateDir, '.github'))) {
+      this.copyDirectory(path.join(templateDir, '.github'), path.join(appDir, '.github'));
+    }
 
-    // Run initial setup
-    console.log('⚙️  Running initial setup...');
-    execSync('npm run format', { stdio: 'inherit' });
+    // Update package.json with our scripts and config
+    this.updatePackageJson(appDir);
 
     console.log(`✅ Successfully created ${appName}`);
     console.log('📋 Next steps:');
@@ -248,6 +316,78 @@ class AIFirstCLI {
         fs.copyFileSync(srcPath, destPath);
       }
     }
+  }
+
+  copyDirectorySelective(src, dest) {
+    if (!fs.existsSync(dest)) {
+      fs.mkdirSync(dest, { recursive: true });
+    }
+
+    const items = fs.readdirSync(src);
+    
+    for (const item of items) {
+      const srcPath = path.join(src, item);
+      const destPath = path.join(dest, item);
+      
+      if (fs.statSync(srcPath).isDirectory()) {
+        this.copyDirectorySelective(srcPath, destPath);
+      } else {
+        // Skip default CRA files that we want to replace
+        const skipFiles = ['App.tsx', 'App.test.tsx', 'index.tsx', 'index.css', 'App.css'];
+        if (!skipFiles.includes(item)) {
+          fs.copyFileSync(srcPath, destPath);
+        }
+      }
+    }
+  }
+
+  updatePackageJson(appDir) {
+    const packageJsonPath = path.join(appDir, 'package.json');
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+    
+    // Update scripts to use craco
+    packageJson.scripts = {
+      ...packageJson.scripts,
+      "start": "craco start",
+      "start:mock": "REACT_APP_USE_MOCK_API=true craco start",
+      "start:real": "REACT_APP_USE_MOCK_API=false craco start",
+      "build": "craco build",
+      "build:mock": "REACT_APP_USE_MOCK_API=true craco build",
+      "test": "craco test",
+      "test:coverage": "craco test --coverage --watchAll=false",
+      "test:mock": "REACT_APP_USE_MOCK_API=true craco test",
+      "lint": "eslint src --ext .ts,.tsx",
+      "lint:fix": "eslint src --ext .ts,.tsx --fix",
+      "typecheck": "tsc --noEmit",
+      "format": "prettier --write \"src/**/*.{ts,tsx,json,css,md}\"",
+      "format:check": "prettier --check \"src/**/*.{ts,tsx,json,css,md}\""
+    };
+
+    // Add Jest configuration
+    packageJson.jest = {
+      "collectCoverageFrom": [
+        "src/**/*.{ts,tsx}",
+        "!src/**/*.d.ts",
+        "!src/index.tsx",
+        "!src/reportWebVitals.ts"
+      ],
+      "coverageThreshold": {
+        "global": {
+          "branches": 70,
+          "functions": 70,
+          "lines": 70,
+          "statements": 70
+        }
+      }
+    };
+
+    // Add engines
+    packageJson.engines = {
+      "node": ">=22.0.0",
+      "npm": ">=10.0.0"
+    };
+
+    fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
   }
 
   showHelp() {

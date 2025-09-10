@@ -48,6 +48,7 @@ async function generatePage(options) {
     storeNames: hasStore ? `${entityName.toLowerCase()}Store` : '',
     storeName: `${entityName.toLowerCase()}Store`,
     storeActions: hasStore ? [`fetch${entityName}List`] : [],
+    futureProps: '{{ v7_startTransition: true, v7_relativeSplatPath: true }}',
     loadingCondition: hasStore ? `${entityName.toLowerCase()}Store.loading` : 'false',
     errorCondition: hasStore ? `${entityName.toLowerCase()}Store.error` : 'false',
     errorMessage: hasStore ? `${entityName.toLowerCase()}Store.error` : 'null',
@@ -55,7 +56,7 @@ async function generatePage(options) {
       {
         text: `Add ${entityName}`,
         type: 'primary',
-        onClick: `handleAdd${entityName}`,
+        onClick: `{handleAdd${entityName}}`,
       }
     ],
     handlers: [

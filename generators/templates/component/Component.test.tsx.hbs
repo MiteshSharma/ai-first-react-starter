@@ -16,11 +16,11 @@ describe('{{componentName}}', () => {
 
 {{#each props}}
   it('should display {{name}} correctly', () => {
-    render(<{{componentName}} {...defaultProps} />);
+    render(<{{../componentName}} {...defaultProps} />);
     {{#if isText}}
     expect(screen.getByText(defaultProps.{{name}})).toBeInTheDocument();
     {{else}}
-    expect(screen.getByTestId('{{kebabName}}')).toBeInTheDocument();
+    expect(screen.getByTestId('{{../kebabName}}')).toBeInTheDocument();
     {{/if}}
   });
 

@@ -109,7 +109,7 @@ export const {{pageName}}: React.FC = () => {
   if ({{loadingCondition}}) {
     return (
       <{{pageName}}Wrapper data-testid="{{kebabName}}-loading">
-        <div style={{ textAlign: 'center', padding: '50px' }}>
+        <div style=\{{ textAlign: 'center', padding: '50px' }}>
           <div>Loading {{entityName}}...</div>
         </div>
       </{{pageName}}Wrapper>
@@ -121,7 +121,7 @@ export const {{pageName}}: React.FC = () => {
   if ({{errorCondition}}) {
     return (
       <{{pageName}}Wrapper data-testid="{{kebabName}}-error">
-        <div style={{ textAlign: 'center', padding: '50px', color: '#ff4d4f' }}>
+        <div style=\{{ textAlign: 'center', padding: '50px', color: '#ff4d4f' }}>
           <Title level={4}>Error</Title>
           <p>{{{errorMessage}}}</p>
           {{#if hasRetry}}
@@ -164,7 +164,7 @@ export const {{pageName}}: React.FC = () => {
           <p>This page is connected to the following stores: {{storeNames}}</p>
           {{/if}}
           {{#if hasComponents}}
-          <div style={{ marginTop: '24px' }}>
+          <div style=\{{ marginTop: '24px' }}>
             {{#each components}}
             <{{this}} />
             {{/each}}

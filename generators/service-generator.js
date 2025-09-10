@@ -47,6 +47,7 @@ async function generateService(options) {
   // Prepare template data
   const templateData = {
     serviceName,
+    serviceNameLower: serviceName.toLowerCase(),
     entityName,
     description,
     baseUrl,

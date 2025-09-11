@@ -6,28 +6,17 @@ Welcome to the comprehensive documentation for the AI-First React Framework - a 
 
 ### Getting Started
 - [Installation & Setup](./getting-started.md)
-- [Quick Start Guide](./quick-start.md)
-- [Project Structure](./project-structure.md)
 
 ### Framework Features
 - [CLI Reference](./cli-reference.md)
 - [Code Generators](./generators.md)
 - [Architecture Overview](./architecture.md)
 - [State Management with MobX](./state-management.md)
-- [Styling with Styled Components & Ant Design](./styling.md)
 - [Testing Strategy](./testing.md)
+- [API Mocking System](./API_MOCKING.md)
 
 ### Advanced Topics
 - [Build & Deployment](./deployment.md)
-- [Performance Optimization](./performance.md)
-- [Security Best Practices](./security.md)
-- [Contributing Guide](./contributing.md)
-
-### API Reference
-- [Component API](./api/components.md)
-- [Store API](./api/stores.md)
-- [Service API](./api/services.md)
-- [Utilities API](./api/utilities.md)
 
 ## 🚀 Quick Start
 

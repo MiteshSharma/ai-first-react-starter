@@ -18,22 +18,22 @@ export interface MockUser {
 
 // Generate a single mock user
 export const generateMockUser = (overrides: Partial<MockUser> = {}): MockUser => {
-  const firstName = faker.name.firstName();
-  const lastName = faker.name.lastName();
-  const email = faker.internet.email(firstName, lastName).toLowerCase();
+  const firstName = faker.person.firstName();
+  const lastName = faker.person.lastName();
+  const email = faker.internet.email({ firstName, lastName }).toLowerCase();
   
   return {
-    id: faker.datatype.uuid(),
+    id: faker.string.uuid(),
     name: `${firstName} ${lastName}`,
     email,
-    avatar: faker.internet.avatar(),
-    role: faker.helpers.arrayElement(['admin', 'user', 'moderator']),
+    avatar: faker.image.avatar(),
+    role: 'user',
     isActive: faker.datatype.boolean(),
-    createdAt: faker.date.past(2).toISOString(),
-    updatedAt: faker.date.recent(30).toISOString(),
+    createdAt: faker.date.past({ years: 2 }).toISOString(),
+    updatedAt: faker.date.recent({ days: 30 }).toISOString(),
     profile: {
       bio: faker.lorem.sentence(),
-      location: `${faker.address.city()}, ${faker.address.stateAbbr()}`,
+      location: `${faker.location.city()}, ${faker.location.state()}`,
       website: faker.internet.url(),
     },
     ...overrides,

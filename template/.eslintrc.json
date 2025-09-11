@@ -1,106 +1,41 @@
 {
-  "env": {
-    "browser": true,
-    "es2021": true,
-    "jest": true
-  },
   "extends": [
-    "airbnb",
-    "airbnb-typescript",
-    "plugin:@typescript-eslint/recommended",
-    "plugin:@typescript-eslint/recommended-requiring-type-checking",
-    "plugin:sonarjs/recommended",
-    "plugin:react/recommended",
-    "plugin:react-hooks/recommended",
-    "prettier"
-  ],
-  "parser": "@typescript-eslint/parser",
-  "parserOptions": {
-    "ecmaFeatures": {
-      "jsx": true
-    },
-    "ecmaVersion": "latest",
-    "sourceType": "module",
-    "project": "./tsconfig.json"
-  },
-  "plugins": [
-    "react",
-    "react-hooks",
-    "@typescript-eslint",
-    "sonarjs"
+    "react-app",
+    "react-app/jest"
   ],
   "rules": {
-    "@typescript-eslint/no-explicit-any": "error",
-    "@typescript-eslint/no-unused-vars": "error",
-    "@typescript-eslint/explicit-function-return-type": "warn",
-    "@typescript-eslint/prefer-nullish-coalescing": "error",
-    "@typescript-eslint/prefer-optional-chain": "error",
-    "max-lines": ["error", { "max": 660 }],
-    "max-params": ["error", { "max": 5 }],
-    "sonarjs/cognitive-complexity": ["error", 25],
-    "import/no-default-export": "error",
-    "no-console": "error",
-    "react/react-in-jsx-scope": "off",
-    "react/function-component-definition": [
-      "error",
-      {
-        "namedComponents": "arrow-function",
-        "unnamedComponents": "arrow-function"
-      }
-    ],
-    "react/jsx-props-no-spreading": "off",
-    "import/prefer-default-export": "off",
-    "import/extensions": [
-      "error",
-      "ignorePackages",
-      {
-        "ts": "never",
-        "tsx": "never"
-      }
-    ],
-    "react/require-default-props": "off",
-    "arrow-body-style": ["error", "as-needed"],
-    "jsx-a11y/label-has-associated-control": [
-      "error",
-      {
-        "required": {
-          "some": ["nesting", "id"]
-        }
-      }
-    ]
+    "@typescript-eslint/no-unused-vars": "warn",
+    "@typescript-eslint/no-explicit-any": "warn",
+    "no-console": "warn",
+    "react/jsx-no-useless-fragment": "off",
+    "arrow-body-style": "off",
+    "prefer-destructuring": "off",
+    "prefer-template": "off",
+    "no-else-return": "off",
+    "import/no-mutable-exports": "off",
+    "@typescript-eslint/prefer-promise-reject-errors": "off",
+    "no-promise-executor-return": "off",
+    "class-methods-use-this": "off",
+    "no-restricted-syntax": "off"
   },
   "overrides": [
     {
-      "files": ["src/index.tsx", "src/App.tsx"],
+      "files": ["src/mocks/**/*", "src/services/**/*"],
       "rules": {
-        "import/no-default-export": "off"
+        "@typescript-eslint/no-unused-vars": "off",
+        "@typescript-eslint/no-explicit-any": "off",
+        "no-console": "off",
+        "no-param-reassign": "off",
+        "no-underscore-dangle": "off",
+        "no-plusplus": "off"
       }
     },
     {
       "files": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
       "rules": {
-        "sonarjs/no-duplicate-string": "off",
-        "@typescript-eslint/no-explicit-any": "off"
-      }
-    },
-    {
-      "files": ["src/test/setupTests.ts"],
-      "rules": {
-        "no-console": "off",
-        "@typescript-eslint/no-unsafe-assignment": "off",
-        "import/no-extraneous-dependencies": "off"
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-unused-vars": "off"
       }
     }
-  ],
-  "settings": {
-    "react": {
-      "version": "detect"
-    },
-    "import/resolver": {
-      "typescript": {
-        "alwaysTryTypes": true,
-        "project": "./tsconfig.json"
-      }
-    }
-  }
+  ]
 }

@@ -10,6 +10,8 @@ module.exports = {
       '@utils': path.resolve(__dirname, 'src/utils'),
       '@auth': path.resolve(__dirname, 'src/auth'),
       '@assets': path.resolve(__dirname, 'src/assets'),
+      '@pages': path.resolve(__dirname, 'src/pages'),
+      '@routes': path.resolve(__dirname, 'src/routes'),
     },
     configure: (webpackConfig, { env, paths }) => {
       // Production optimizations
@@ -52,6 +54,8 @@ module.exports = {
         '^@utils/(.*)$': '<rootDir>/src/utils/$1',
         '^@auth/(.*)$': '<rootDir>/src/auth/$1',
         '^@assets/(.*)$': '<rootDir>/src/assets/$1',
+        '^@pages/(.*)$': '<rootDir>/src/pages/$1',
+        '^@routes/(.*)$': '<rootDir>/src/routes/$1',
       };
 
       // Enhanced test setup

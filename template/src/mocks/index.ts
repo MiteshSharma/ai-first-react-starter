@@ -21,7 +21,7 @@ export const setupMocks = () => {
   }
 
   // Create mock adapter instance
-  mockInstance = new MockAdapter(apiClient, { 
+  mockInstance = new MockAdapter(apiClient.client, { 
     delayResponse: Math.random() * 1000 + 500 // Random delay 500-1500ms
   });
 

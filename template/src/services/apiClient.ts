@@ -5,7 +5,7 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
  * @description Centralized API client with interceptors and error handling
  */
 class ApiClient {
-  private client: AxiosInstance;
+  public client: AxiosInstance;
 
   private retryCount = 3;
 

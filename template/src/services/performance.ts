@@ -1,11 +1,11 @@
-import { getCLS, getFID, getFCP, getLCP, getTTFB, Metric } from 'web-vitals';
+import { onCLS, onINP, onFCP, onLCP, onTTFB, type Metric } from 'web-vitals';
 
 /**
  * Web Vitals performance monitoring configuration
  */
 interface PerformanceConfig {
-  endpoint?: string;
-  apiKey?: string;
+  endpoint?: string | undefined;
+  apiKey?: string | undefined;
   enabled: boolean;
   debug: boolean;
 }
@@ -71,11 +71,11 @@ export const initPerformanceMonitoring = (): void => {
   };
 
   // Collect all Web Vitals metrics
-  getCLS(sendToAnalytics);
-  getFID(sendToAnalytics);
-  getFCP(sendToAnalytics);
-  getLCP(sendToAnalytics);
-  getTTFB(sendToAnalytics);
+  onCLS(sendToAnalytics);
+  onINP(sendToAnalytics);
+  onFCP(sendToAnalytics);
+  onLCP(sendToAnalytics);
+  onTTFB(sendToAnalytics);
 
   if (config.debug) {
     console.log('Performance monitoring initialized');
@@ -165,7 +165,7 @@ export const monitorResourcePerformance = (): void => {
 /**
  * Monitor memory usage (Chrome only)
  */
-export const monitorMemoryUsage = (): void => {
+export const monitorMemoryUsage = (): any => {
   if ('memory' in window.performance) {
     const memory = (window.performance as any).memory;
     

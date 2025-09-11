@@ -27,7 +27,7 @@ const generateMockToken = (userId: string): string => {
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60), // 24 hours
   }));
-  const signature = btoa(faker.datatype.uuid());
+  const signature = btoa(faker.string.uuid());
   
   return `${header}.${payload}.${signature}`;
 };
@@ -54,7 +54,7 @@ export const mockCredentials = {
       email: 'moderator@example.com',
       role: 'moderator',
       isActive: true,
-      avatar: faker.internet.avatar(),
+      avatar: faker.image.avatar(),
       createdAt: faker.date.past().toISOString(),
       updatedAt: faker.date.recent().toISOString(),
     },

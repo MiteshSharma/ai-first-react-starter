@@ -120,6 +120,7 @@ class AIFirstCLI {
       '.prettierignore',
       '.prettierrc',
       'craco.config.js',
+      'tsconfig.json',
       'Dockerfile',
       'nginx.conf'
     ];
@@ -332,8 +333,8 @@ class AIFirstCLI {
       if (fs.statSync(srcPath).isDirectory()) {
         this.copyDirectorySelective(srcPath, destPath);
       } else {
-        // Skip default CRA files that we want to replace
-        const skipFiles = ['App.tsx', 'App.test.tsx', 'index.tsx', 'index.css', 'App.css'];
+        // Skip only CSS files since we use styled-components
+        const skipFiles = ['index.css', 'App.css'];
         if (!skipFiles.includes(item)) {
           fs.copyFileSync(srcPath, destPath);
         }
@@ -362,6 +363,11 @@ class AIFirstCLI {
       "format": "prettier --write \"src/**/*.{ts,tsx,json,css,md}\"",
       "format:check": "prettier --check \"src/**/*.{ts,tsx,json,css,md}\""
     };
+
+    // Remove default ESLint config to use our custom .eslintrc.json
+    if (packageJson.eslintConfig) {
+      delete packageJson.eslintConfig;
+    }
 
     // Add Jest configuration
     packageJson.jest = {

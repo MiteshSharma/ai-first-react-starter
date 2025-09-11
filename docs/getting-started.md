@@ -86,16 +86,22 @@ Your generated application comes with these npm scripts:
 ```bash
 # Development
 npm start              # Start development server
-npm run typecheck      # Check TypeScript types
-npm run lint           # Run ESLint
-npm run lint:fix       # Fix ESLint issues automatically
+npm run start:mock     # Start with mock API enabled
+npm run start:real     # Start with real API (mocks disabled)
+
+# Build
+npm run build          # Create production build
+npm run build:mock     # Build with mock API enabled
 
 # Testing
 npm test               # Run tests in watch mode
 npm run test:coverage  # Run tests with coverage report
+npm run test:mock      # Run tests with mock API enabled
 
-# Production
-npm run build          # Create production build
+# Code Quality
+npm run typecheck      # Check TypeScript types
+npm run lint           # Run ESLint
+npm run lint:fix       # Fix ESLint issues automatically
 npm run format         # Format code with Prettier
 npm run format:check   # Check code formatting
 ```
@@ -240,13 +246,19 @@ The framework uses strict TypeScript configuration:
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
-    "baseUrl": "src",
+    "noImplicitReturns": true,
+    "exactOptionalPropertyTypes": true,
+    "baseUrl": ".",
     "paths": {
-      "@components/*": ["components/*"],
-      "@stores/*": ["stores/*"],
-      "@services/*": ["services/*"],
-      "@types/*": ["types/*"],
-      "@utils/*": ["utils/*"]
+      "@components/*": ["src/components/*"],
+      "@stores/*": ["src/stores/*"],
+      "@services/*": ["src/services/*"],
+      "@hooks/*": ["src/hooks/*"],
+      "@utils/*": ["src/utils/*"],
+      "@auth/*": ["src/auth/*"],
+      "@assets/*": ["src/assets/*"],
+      "@pages/*": ["src/pages/*"],
+      "@routes/*": ["src/routes/*"]
     }
   }
 }

@@ -91,10 +91,14 @@ ai-first generate page UsersPage
 
 ## 📖 Documentation
 
-- [**Setup Guide**](docs/setup-guide.md) - Get started quickly
-- [**Architecture Guide**](docs/architecture-guide.md) - Understand the structure
-- [**AI Integration Guide**](docs/ai-integration-guide.md) - AI-friendly patterns
-- [**Best Practices**](docs/best-practices.md) - Coding standards and conventions
+- [**Getting Started Guide**](docs/getting-started.md) - Get started quickly
+- [**Architecture Guide**](docs/architecture.md) - Understand the structure
+- [**CLI Reference**](docs/cli-reference.md) - Command-line interface documentation
+- [**Code Generators**](docs/generators.md) - AI-powered code generation
+- [**State Management**](docs/state-management.md) - MobX integration patterns
+- [**Testing Strategy**](docs/testing.md) - Comprehensive testing approach
+- [**Deployment Guide**](docs/deployment.md) - Production deployment
+- [**API Mocking**](docs/API_MOCKING.md) - Development with mock APIs
 
 ## 🛠️ Available Generators
 
@@ -186,6 +190,10 @@ ai-first-react-app/
 Every generated project includes:
 
 ```bash
+# Development
+npm start                # Start development server
+npm run start:mock       # Start with mock API enabled
+
 # Type checking
 npm run typecheck
 

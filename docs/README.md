@@ -75,9 +75,6 @@ ai-first-react-starter/
 ## 🤝 Community & Support
 
 - **Issues**: Report bugs and feature requests on GitHub
-- **Discussions**: Join our community discussions
-- **Contributing**: See [Contributing Guide](./contributing.md)
-- **Examples**: Explore [example applications](../examples/)
 
 ## 📋 Requirements
 
